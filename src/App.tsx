@@ -3,13 +3,13 @@ import ThreeScene from './components/ThreeScene';
 
 type TreeStage = 'empty' | 'seed' | 'sprout' | 'flowering' | 'adult' | 'old';
 
-const STAGE_THRESHOLDS: { stage: TreeStage; min: number; max: number; label: string }[] = [
-  { stage: 'empty', min: 0, max: 0, label: 'Empty Soil' },
-  { stage: 'seed', min: 1, max: 20, label: '🌰 Seed' },
-  { stage: 'sprout', min: 21, max: 40, label: '🌱 Sprout' },
-  { stage: 'flowering', min: 41, max: 60, label: '🌸 Flowering' },
-  { stage: 'adult', min: 61, max: 80, label: '🌳 Adult Tree' },
-  { stage: 'old', min: 81, max: 100, label: '🪵 Old & Dead' },
+const STAGE_INFO: { stage: TreeStage; emoji: string; label: string; desc: string }[] = [
+  { stage: 'empty', emoji: '⬜', label: 'Empty Soil', desc: 'Plant a seed to begin your journey through time!' },
+  { stage: 'seed', emoji: '🌰', label: 'Seed Planted', desc: 'A tiny seed rests in the earth, waiting for water...' },
+  { stage: 'sprout', emoji: '🌱', label: 'Sprouting', desc: 'Life emerges! A small sprout reaches for the sky.' },
+  { stage: 'flowering', emoji: '🌸', label: 'In Bloom', desc: 'Beautiful flowers bloom on the young tree!' },
+  { stage: 'adult', emoji: '🌳', label: 'Full Growth', desc: 'A mighty tree stands tall and proud.' },
+  { stage: 'old', emoji: '🪵', label: 'Ancient & Dead', desc: 'The tree has lived its full life. Stairs appear!' },
 ];
 
 function getStageFromTime(time: number): TreeStage {
@@ -21,21 +21,9 @@ function getStageFromTime(time: number): TreeStage {
   return 'old';
 }
 
-function getStageLabel(time: number): string {
+function getStageInfo(time: number) {
   const stage = getStageFromTime(time);
-  const info = STAGE_THRESHOLDS.find(s => s.stage === stage);
-  return info?.label || 'Unknown';
-}
-
-function getStageDescription(stage: TreeStage): string {
-  switch (stage) {
-    case 'empty': return 'The soil is bare. Plant a seed to begin!';
-    case 'seed': return 'A tiny seed rests in the earth, waiting for water...';
-    case 'sprout': return 'Life emerges! A small sprout reaches for the sky.';
-    case 'flowering': return 'Beautiful flowers bloom! The tree is in its prime youth.';
-    case 'adult': return 'A mighty tree stands tall, providing shade and shelter.';
-    case 'old': return 'The tree has lived its full life. Its wood can now serve as stairs!';
-  }
+  return STAGE_INFO.find(s => s.stage === stage) || STAGE_INFO[0];
 }
 
 export default function App() {
@@ -43,28 +31,29 @@ export default function App() {
   const [hasSeeded, setHasSeeded] = useState(false);
   const [hasWater, setHasWater] = useState(false);
   const [showStairs, setShowStairs] = useState(false);
-  const [characterPos, setCharacterPos] = useState({ x: -5, z: 2 });
+  const [characterPos, setCharacterPos] = useState({ x: -3, z: 1 });
   const [gameMessage, setGameMessage] = useState('Welcome to Chrono Garden! 🌿');
   const [hasPassedWall, setHasPassedWall] = useState(false);
-  const [showTimeParticles, setShowTimeParticles] = useState(false);
+  const [showSparkles, setShowSparkles] = useState(false);
 
   const treeStage = getStageFromTime(timeValue);
+  const stageInfo = getStageInfo(timeValue);
 
   const handleSeed = useCallback(() => {
     if (!hasSeeded) {
       setHasSeeded(true);
       setTimeValue(1);
       setGameMessage('🌰 You planted a seed! Now water it to help it grow...');
-      setShowTimeParticles(true);
-      setTimeout(() => setShowTimeParticles(false), 1000);
+      setShowSparkles(true);
+      setTimeout(() => setShowSparkles(false), 1500);
     }
   }, [hasSeeded]);
 
   const handleWater = useCallback(() => {
     if (hasSeeded && timeValue > 0) {
       setHasWater(true);
-      setGameMessage('💧 Watering the tree... Watch it grow with the time slider!');
-      setTimeout(() => setHasWater(false), 2000);
+      setGameMessage('💧 Watering... Use the time slider to grow the tree!');
+      setTimeout(() => setHasWater(false), 2500);
     }
   }, [hasSeeded, timeValue]);
 
@@ -76,20 +65,21 @@ export default function App() {
       const stage = getStageFromTime(newValue);
       if (stage === 'old' && !showStairs) {
         setShowStairs(true);
-        setGameMessage('🪵 The tree is old and dead! Wooden stairs have appeared! You can now climb over the wall!');
+        setGameMessage('🪵 The tree is old and dead! Wooden stairs appeared! Climb the wall!');
       } else if (stage !== 'old') {
         setShowStairs(false);
       }
       
-      setGameMessage(`⏳ Time flows... ${getStageLabel(newValue)}`);
+      const info = getStageInfo(newValue);
+      setGameMessage(`${info.emoji} ${info.desc}`);
     }
   }, [hasSeeded, showStairs]);
 
   const handleCrossWall = useCallback(() => {
     if (showStairs && !hasPassedWall) {
-      setCharacterPos({ x: 3, z: -5 });
+      setCharacterPos({ x: 1.5, z: -4 });
       setHasPassedWall(true);
-      setGameMessage('🎉 Congratulations! You crossed the wall using the dead tree stairs! Time magic!');
+      setGameMessage('🎉 You crossed the wall! You mastered the 4th dimension!');
     }
   }, [showStairs, hasPassedWall]);
 
@@ -98,13 +88,15 @@ export default function App() {
     setHasSeeded(false);
     setHasWater(false);
     setShowStairs(false);
-    setCharacterPos({ x: -5, z: 2 });
+    setCharacterPos({ x: -3, z: 1 });
     setGameMessage('🔄 Time rewound! A new cycle begins...');
     setHasPassedWall(false);
   }, []);
 
+  const progressPercent = (timeValue / 100) * 100;
+
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
+    <div className="relative w-full h-screen overflow-hidden">
       {/* Three.js Scene */}
       <ThreeScene
         timeValue={timeValue}
@@ -114,120 +106,119 @@ export default function App() {
         characterPos={characterPos}
       />
 
-      {/* Time particles effect */}
-      {showTimeParticles && (
+      {/* Sparkle effects */}
+      {showSparkles && (
         <div className="absolute inset-0 pointer-events-none z-10">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {Array.from({ length: 15 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 rounded-full bg-yellow-300 animate-ping"
+              className="absolute animate-ping"
               style={{
-                left: `${40 + Math.random() * 20}%`,
-                top: `${30 + Math.random() * 30}%`,
-                animationDelay: `${Math.random() * 0.5}s`,
-                animationDuration: '1s',
+                left: `${35 + Math.random() * 30}%`,
+                top: `${25 + Math.random() * 40}%`,
+                animationDelay: `${Math.random() * 0.8}s`,
+                animationDuration: '1.2s',
               }}
-            />
+            >
+              <span className="text-xl">✨</span>
+            </div>
           ))}
         </div>
       )}
 
       {/* UI Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-4">
+      <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5">
         {/* Top bar */}
         <div className="pointer-events-auto">
-          <div className="bg-gradient-to-r from-purple-900/80 to-indigo-900/80 backdrop-blur-md rounded-2xl p-4 max-w-lg mx-auto border border-purple-400/30 shadow-lg shadow-purple-500/20">
-            <h1 className="text-2xl font-bold text-center bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-3 sm:p-4 max-w-md mx-auto border border-white/50 shadow-xl shadow-pink-200/30">
+            <h1 className="text-xl sm:text-2xl font-black text-center bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent">
               ⏰ Chrono Garden
             </h1>
-            <p className="text-center text-purple-200 text-sm mt-1">Navigate through time to overcome obstacles</p>
+            <p className="text-center text-gray-500 text-xs sm:text-sm mt-0.5 font-medium">Navigate through time ✨</p>
           </div>
         </div>
 
-        {/* Game message */}
-        <div className="pointer-events-auto absolute top-28 left-1/2 -translate-x-1/2">
-          <div className="bg-black/60 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/20 shadow-xl max-w-md">
-            <p className="text-white text-center text-sm font-medium">{gameMessage}</p>
+        {/* Game message bubble */}
+        <div className="pointer-events-auto absolute top-24 sm:top-28 left-1/2 -translate-x-1/2 w-[90%] max-w-sm">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2.5 border border-pink-200/50 shadow-lg shadow-pink-100/50">
+            <p className="text-gray-700 text-center text-xs sm:text-sm font-semibold">{gameMessage}</p>
           </div>
         </div>
 
         {/* Bottom controls */}
         <div className="pointer-events-auto">
-          <div className="bg-gradient-to-t from-gray-900/90 to-gray-900/70 backdrop-blur-md rounded-2xl p-5 max-w-2xl mx-auto border border-gray-600/30 shadow-2xl">
+          <div className="bg-white/85 backdrop-blur-xl rounded-3xl p-4 sm:p-5 max-w-lg mx-auto border border-white/50 shadow-2xl shadow-purple-200/30">
             {/* Stage indicator */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">
-                  {treeStage === 'empty' && '⬜'}
-                  {treeStage === 'seed' && '🌰'}
-                  {treeStage === 'sprout' && '🌱'}
-                  {treeStage === 'flowering' && '🌸'}
-                  {treeStage === 'adult' && '🌳'}
-                  {treeStage === 'old' && '🪵'}
-                </span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center text-xl shadow-inner">
+                  {stageInfo.emoji}
+                </div>
                 <div>
-                  <p className="text-white font-bold text-sm">{getStageLabel(timeValue)}</p>
-                  <p className="text-gray-400 text-xs">{getStageDescription(treeStage)}</p>
+                  <p className="text-gray-800 font-bold text-sm">{stageInfo.label}</p>
+                  <p className="text-gray-400 text-[11px]">Stage {STAGE_INFO.findIndex(s => s.stage === treeStage) + 1}/6</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-cyan-300 font-mono text-lg font-bold">{timeValue}</p>
-                <p className="text-gray-500 text-xs">Time Units</p>
+                <p className="text-transparent bg-gradient-to-r from-purple-500 to-pink-500 font-black text-xl">{timeValue}</p>
+                <p className="text-gray-400 text-[10px] font-medium">TIME UNITS</p>
               </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="mb-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-amber-400 via-green-400 to-purple-500"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
 
             {/* Time Slider */}
             <div className="mb-4">
-              <label className="text-gray-300 text-xs mb-1 block font-medium">
-                🕐 Time Slider — Drag to flow through time
+              <label className="text-gray-600 text-xs mb-1.5 block font-bold">
+                🕐 Drag to flow through time
               </label>
-              <div className="relative">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={timeValue}
-                  onChange={handleTimeChange}
-                  disabled={!hasSeeded}
-                  className="w-full h-3 rounded-full appearance-none cursor-pointer
-                    bg-gradient-to-r from-amber-800 via-green-600 via-50% to-gray-700
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    [&::-webkit-slider-thumb]:appearance-none
-                    [&::-webkit-slider-thumb]:w-6
-                    [&::-webkit-slider-thumb]:h-6
-                    [&::-webkit-slider-thumb]:rounded-full
-                    [&::-webkit-slider-thumb]:bg-gradient-to-br
-                    [&::-webkit-slider-thumb]:from-yellow-300
-                    [&::-webkit-slider-thumb]:to-orange-500
-                    [&::-webkit-slider-thumb]:shadow-lg
-                    [&::-webkit-slider-thumb]:shadow-orange-500/50
-                    [&::-webkit-slider-thumb]:border-2
-                    [&::-webkit-slider-thumb]:border-white
-                    [&::-webkit-slider-thumb]:cursor-grab
-                    [&::-webkit-slider-thumb]:active:cursor-grabbing
-                    [&::-moz-range-thumb]:w-6
-                    [&::-moz-range-thumb]:h-6
-                    [&::-moz-range-thumb]:rounded-full
-                    [&::-moz-range-thumb]:bg-gradient-to-br
-                    [&::-moz-range-thumb]:from-yellow-300
-                    [&::-moz-range-thumb]:to-orange-500
-                    [&::-moz-range-thumb]:border-2
-                    [&::-moz-range-thumb]:border-white
-                    [&::-moz-range-thumb]:cursor-grab"
-                />
-                {/* Stage markers */}
-                <div className="flex justify-between mt-1 px-1">
-                  {STAGE_THRESHOLDS.map((s) => (
-                    <span key={s.stage} className="text-[10px] text-gray-500">
-                      {s.stage === 'empty' && '·'}
-                      {s.stage === 'seed' && '🌰'}
-                      {s.stage === 'sprout' && '🌱'}
-                      {s.stage === 'flowering' && '🌸'}
-                      {s.stage === 'adult' && '🌳'}
-                      {s.stage === 'old' && '🪵'}
-                    </span>
-                  ))}
-                </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={timeValue}
+                onChange={handleTimeChange}
+                disabled={!hasSeeded}
+                className="w-full h-4 rounded-full appearance-none cursor-pointer
+                  bg-gradient-to-r from-amber-200 via-green-200 via-50% to-gray-300
+                  disabled:opacity-40 disabled:cursor-not-allowed
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:w-7
+                  [&::-webkit-slider-thumb]:h-7
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:bg-gradient-to-br
+                  [&::-webkit-slider-thumb]:from-yellow-300
+                  [&::-webkit-slider-thumb]:to-pink-400
+                  [&::-webkit-slider-thumb]:shadow-lg
+                  [&::-webkit-slider-thumb]:shadow-pink-300/50
+                  [&::-webkit-slider-thumb]:border-3
+                  [&::-webkit-slider-thumb]:border-white
+                  [&::-webkit-slider-thumb]:cursor-grab
+                  [&::-webkit-slider-thumb]:active:cursor-grabbing
+                  [&::-webkit-slider-thumb]:active:scale-110
+                  [&::-moz-range-thumb]:w-7
+                  [&::-moz-range-thumb]:h-7
+                  [&::-moz-range-thumb]:rounded-full
+                  [&::-moz-range-thumb]:bg-gradient-to-br
+                  [&::-moz-range-thumb]:from-yellow-300
+                  [&::-moz-range-thumb]:to-pink-400
+                  [&::-moz-range-thumb]:border-3
+                  [&::-moz-range-thumb]:border-white
+                  [&::-moz-range-thumb]:cursor-grab"
+              />
+              {/* Stage markers */}
+              <div className="flex justify-between mt-1 px-0.5">
+                {STAGE_INFO.map((s) => (
+                  <span key={s.stage} className="text-[10px]">
+                    {s.emoji}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -236,25 +227,23 @@ export default function App() {
               <button
                 onClick={handleSeed}
                 disabled={hasSeeded}
-                className="flex-1 min-w-[100px] px-4 py-2.5 rounded-xl font-bold text-sm
-                  bg-gradient-to-br from-amber-500 to-orange-600 text-white
-                  hover:from-amber-400 hover:to-orange-500
-                  disabled:from-gray-600 disabled:to-gray-700 disabled:text-gray-400
-                  transition-all duration-200 shadow-lg shadow-orange-500/30
-                  disabled:shadow-none active:scale-95"
+                className="flex-1 min-w-[90px] px-3 py-2.5 rounded-2xl font-bold text-xs sm:text-sm
+                  bg-gradient-to-br from-amber-300 to-orange-400 text-white
+                  hover:from-amber-200 hover:to-orange-300 hover:shadow-lg hover:shadow-orange-200/50
+                  disabled:from-gray-200 disabled:to-gray-300 disabled:text-gray-400
+                  transition-all duration-200 active:scale-95"
               >
-                🌰 Plant Seed
+                🌰 Plant
               </button>
               
               <button
                 onClick={handleWater}
                 disabled={!hasSeeded || timeValue === 0}
-                className="flex-1 min-w-[100px] px-4 py-2.5 rounded-xl font-bold text-sm
-                  bg-gradient-to-br from-cyan-400 to-blue-600 text-white
-                  hover:from-cyan-300 hover:to-blue-500
-                  disabled:from-gray-600 disabled:to-gray-700 disabled:text-gray-400
-                  transition-all duration-200 shadow-lg shadow-blue-500/30
-                  disabled:shadow-none active:scale-95"
+                className="flex-1 min-w-[90px] px-3 py-2.5 rounded-2xl font-bold text-xs sm:text-sm
+                  bg-gradient-to-br from-cyan-300 to-blue-400 text-white
+                  hover:from-cyan-200 hover:to-blue-300 hover:shadow-lg hover:shadow-blue-200/50
+                  disabled:from-gray-200 disabled:to-gray-300 disabled:text-gray-400
+                  transition-all duration-200 active:scale-95"
               >
                 💧 Water
               </button>
@@ -262,33 +251,31 @@ export default function App() {
               {showStairs && !hasPassedWall && (
                 <button
                   onClick={handleCrossWall}
-                  className="flex-1 min-w-[100px] px-4 py-2.5 rounded-xl font-bold text-sm
-                    bg-gradient-to-br from-green-400 to-emerald-600 text-white
-                    hover:from-green-300 hover:to-emerald-500
-                    transition-all duration-200 shadow-lg shadow-green-500/30
-                    active:scale-95 animate-pulse"
+                  className="flex-1 min-w-[90px] px-3 py-2.5 rounded-2xl font-bold text-xs sm:text-sm
+                    bg-gradient-to-br from-green-300 to-emerald-400 text-white
+                    hover:from-green-200 hover:to-emerald-300 hover:shadow-lg hover:shadow-green-200/50
+                    transition-all duration-200 active:scale-95 animate-bounce"
                 >
-                  🧗 Climb Wall!
+                  🧗 Climb!
                 </button>
               )}
 
               <button
                 onClick={handleReset}
-                className="px-4 py-2.5 rounded-xl font-bold text-sm
-                  bg-gradient-to-br from-purple-500 to-indigo-600 text-white
-                  hover:from-purple-400 hover:to-indigo-500
-                  transition-all duration-200 shadow-lg shadow-purple-500/30
-                  active:scale-95"
+                className="px-3 py-2.5 rounded-2xl font-bold text-xs sm:text-sm
+                  bg-gradient-to-br from-purple-300 to-pink-400 text-white
+                  hover:from-purple-200 hover:to-pink-300 hover:shadow-lg hover:shadow-pink-200/50
+                  transition-all duration-200 active:scale-95"
               >
-                🔄 Reset
+                🔄
               </button>
             </div>
 
             {/* Win state */}
             {hasPassedWall && (
-              <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-green-900/50 to-emerald-900/50 border border-green-400/30">
-                <p className="text-green-300 text-center font-bold text-sm">
-                  🏆 You mastered the 4th dimension! The tree's lifecycle became your bridge through time!
+              <div className="mt-3 p-3 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50">
+                <p className="text-green-700 text-center font-bold text-xs sm:text-sm">
+                  🏆 You mastered time! The tree's lifecycle became your bridge!
                 </p>
               </div>
             )}
@@ -297,15 +284,15 @@ export default function App() {
       </div>
 
       {/* Instructions panel */}
-      <div className="absolute top-4 right-4 z-30 pointer-events-auto">
-        <div className="bg-black/60 backdrop-blur-sm rounded-xl p-3 border border-white/10 max-w-[200px]">
-          <h3 className="text-white font-bold text-xs mb-2">📖 How to Play</h3>
-          <ol className="text-gray-300 text-[11px] space-y-1 list-decimal list-inside">
-            <li>Plant a seed near the wall</li>
-            <li>Water it to start growth</li>
-            <li>Use the time slider to age the tree</li>
-            <li>When the tree dies, stairs appear</li>
-            <li>Climb over the wall!</li>
+      <div className="absolute top-3 right-3 z-30 pointer-events-auto hidden sm:block">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-3 border border-white/50 shadow-lg max-w-[180px]">
+          <h3 className="text-gray-700 font-bold text-xs mb-1.5">📖 How to Play</h3>
+          <ol className="text-gray-500 text-[10px] space-y-0.5 list-decimal list-inside leading-relaxed">
+            <li>Plant a seed</li>
+            <li>Water it</li>
+            <li>Slide time forward</li>
+            <li>When tree dies → stairs!</li>
+            <li>Climb the wall!</li>
           </ol>
         </div>
       </div>
