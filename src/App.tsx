@@ -31,7 +31,7 @@ export default function App() {
   const [hasSeeded, setHasSeeded] = useState(false);
   const [hasWater, setHasWater] = useState(false);
   const [showStairs, setShowStairs] = useState(false);
-  const [characterPos, setCharacterPos] = useState({ x: -3, z: 1 });
+  const [characterPos, setCharacterPos] = useState({ x: -2, z: 2 });
   const [gameMessage, setGameMessage] = useState('Welcome to Chrono Garden! 🌿');
   const [hasPassedWall, setHasPassedWall] = useState(false);
   const [showSparkles, setShowSparkles] = useState(false);
@@ -77,7 +77,7 @@ export default function App() {
 
   const handleCrossWall = useCallback(() => {
     if (showStairs && !hasPassedWall) {
-      setCharacterPos({ x: 1.5, z: -4 });
+      setCharacterPos({ x: 1.5, z: -3.5 });
       setHasPassedWall(true);
       setGameMessage('🎉 You crossed the wall! You mastered the 4th dimension!');
     }
@@ -88,7 +88,7 @@ export default function App() {
     setHasSeeded(false);
     setHasWater(false);
     setShowStairs(false);
-    setCharacterPos({ x: -3, z: 1 });
+    setCharacterPos({ x: -2, z: 2 });
     setGameMessage('🔄 Time rewound! A new cycle begins...');
     setHasPassedWall(false);
   }, []);

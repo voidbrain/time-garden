@@ -21,86 +21,107 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
   const frameRef = useRef<number>(0);
 
   const createGround = useCallback((scene: THREE.Scene) => {
-    // 4x4 base - floating island style
-    const gridSize = 4;
-    const tileSize = 2;
-    const totalSize = gridSize * tileSize;
+    // Floating island diorama - organic shape
+    const islandGroup = new THREE.Group();
     
-    // Vibrant green palette
-    const colors = [
-      0x4CAF50,
-      0x66BB6A,
-      0x43A047,
-      0x81C784,
+    // Create irregular island top using multiple overlapping cylinders
+    const topLayers = [
+      { radius: 5.5, height: 0.6, y: 0, color: 0x4CAF50 },
+      { radius: 5.2, height: 0.4, y: -0.3, color: 0x66BB6A },
+      { radius: 4.8, height: 0.5, y: -0.6, color: 0x8B6914 },
     ];
-
-    // Floating island base - layered for depth
-    // Top dirt layer
-    const dirtTop = new THREE.Mesh(
-      new THREE.BoxGeometry(totalSize + 0.3, 0.4, totalSize + 0.3),
-      new THREE.MeshStandardMaterial({ 
-        color: 0x8B6914,
-        roughness: 0.9
-      })
-    );
-    dirtTop.position.y = -0.2;
-    dirtTop.receiveShadow = true;
-    dirtTop.castShadow = true;
-    scene.add(dirtTop);
-
-    // Bottom rock layer (tapered)
-    const rockBottom = new THREE.Mesh(
-      new THREE.BoxGeometry(totalSize - 0.5, 0.6, totalSize - 0.5),
-      new THREE.MeshStandardMaterial({ 
-        color: 0x6B4423,
-        roughness: 0.95
-      })
-    );
-    rockBottom.position.y = -0.7;
-    rockBottom.castShadow = true;
-    scene.add(rockBottom);
     
-    // Bottom tip
-    const rockTip = new THREE.Mesh(
-      new THREE.ConeGeometry(2, 1.5, 6),
+    topLayers.forEach((layer, idx) => {
+      const geometry = new THREE.CylinderGeometry(
+        layer.radius * (1 - idx * 0.1),
+        layer.radius,
+        layer.height,
+        12
+      );
+      const material = new THREE.MeshStandardMaterial({ 
+        color: layer.color,
+        roughness: 0.8,
+        flatShading: true
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.y = layer.y;
+      mesh.receiveShadow = true;
+      mesh.castShadow = true;
+      islandGroup.add(mesh);
+    });
+    
+    // Grass surface - slightly irregular
+    const grassTop = new THREE.Mesh(
+      new THREE.CylinderGeometry(5.3, 5.5, 0.3, 16),
       new THREE.MeshStandardMaterial({ 
-        color: 0x5C3317,
-        roughness: 1.0
+        color: 0x7CB342,
+        roughness: 0.7,
+        flatShading: true
       })
     );
-    rockTip.position.y = -1.75;
-    rockTip.rotation.y = Math.PI / 6;
-    scene.add(rockTip);
-
-    // Grass tiles with slight height variation
-    for (let x = 0; x < gridSize; x++) {
-      for (let z = 0; z < gridSize; z++) {
-        const color = colors[(x + z) % colors.length];
-        const heightVar = Math.random() * 0.05;
-        const geometry = new THREE.BoxGeometry(tileSize * 0.97, 0.2 + heightVar, tileSize * 0.97);
-        const material = new THREE.MeshStandardMaterial({ 
-          color,
-          roughness: 0.7,
-          metalness: 0.0
-        });
-        const tile = new THREE.Mesh(geometry, material);
-        tile.position.set(
-          x * tileSize - (gridSize * tileSize) / 2 + tileSize / 2,
-          0.1 + heightVar / 2,
-          z * tileSize - (gridSize * tileSize) / 2 + tileSize / 2
-        );
-        tile.receiveShadow = true;
-        scene.add(tile);
-      }
+    grassTop.position.y = 0.15;
+    grassTop.receiveShadow = true;
+    islandGroup.add(grassTop);
+    
+    // Rocky underside - tapered cone
+    const rockLayers = [
+      { radiusTop: 4.8, radiusBottom: 3.5, height: 1.2, y: -1.2, color: 0x8D6E63 },
+      { radiusTop: 3.5, radiusBottom: 2.0, height: 1.5, y: -2.5, color: 0x6D4C41 },
+      { radiusTop: 2.0, radiusBottom: 0.8, height: 1.8, y: -4.0, color: 0x5D4037 },
+      { radiusTop: 0.8, radiusBottom: 0.2, height: 1.2, y: -5.2, color: 0x4E342E },
+    ];
+    
+    rockLayers.forEach(layer => {
+      const geometry = new THREE.CylinderGeometry(
+        layer.radiusBottom,
+        layer.radiusTop,
+        layer.height,
+        10
+      );
+      const material = new THREE.MeshStandardMaterial({ 
+        color: layer.color,
+        roughness: 0.95,
+        flatShading: true
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.y = layer.y;
+      mesh.castShadow = true;
+      islandGroup.add(mesh);
+    });
+    
+    // Add rocky protrusions
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const radius = 4 + Math.random() * 1;
+      const rock = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(0.3 + Math.random() * 0.3, 0),
+        new THREE.MeshStandardMaterial({ 
+          color: 0x795548,
+          roughness: 1.0,
+          flatShading: true
+        })
+      );
+      rock.position.set(
+        Math.cos(angle) * radius,
+        -0.5 - Math.random() * 1.5,
+        Math.sin(angle) * radius
+      );
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.castShadow = true;
+      islandGroup.add(rock);
     }
+    
+    scene.add(islandGroup);
 
-    // Cute decorative elements - flowers
+    // Cute decorative elements - flowers scattered on island
     const flowerPositions = [
-      { x: -3, z: 3 },
-      { x: 3, z: -0.5 },
-      { x: -3, z: -3 },
-      { x: 3, z: 3 },
-      { x: -1, z: 3 },
+      { x: -3.5, z: 2.5 },
+      { x: 3.5, z: 1 },
+      { x: -2.5, z: -3.5 },
+      { x: 2.5, z: 3.5 },
+      { x: -1, z: 3.8 },
+      { x: 4, z: -2 },
+      { x: -4, z: -1 },
     ];
 
     flowerPositions.forEach((pos, idx) => {
@@ -124,7 +145,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
       flowerGroup.add(leaf);
       
       // Flower head
-      const petalColors = [0xFF69B4, 0xFFD700, 0xFF6347, 0xDA70D6, 0x87CEEB];
+      const petalColors = [0xFF69B4, 0xFFD700, 0xFF6347, 0xDA70D6, 0x87CEEB, 0xFF8A65, 0xBA68C8];
       const flower = new THREE.Mesh(
         new THREE.SphereGeometry(0.12, 8, 8),
         new THREE.MeshStandardMaterial({ 
@@ -156,42 +177,160 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
     });
 
     // Small grass tufts
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * 4.5;
       const tuft = new THREE.Mesh(
         new THREE.ConeGeometry(0.05, 0.15, 4),
         new THREE.MeshStandardMaterial({ 
-          color: 0x4CAF50,
+          color: 0x558B2F,
           roughness: 0.7
         })
       );
       tuft.position.set(
-        (Math.random() - 0.5) * 7,
-        0.27,
-        (Math.random() - 0.5) * 7
+        Math.cos(angle) * radius,
+        0.3,
+        Math.sin(angle) * radius
       );
       scene.add(tuft);
     }
 
-    // Cute stone path
-    const pathStones = [
-      { x: -3, z: 0 },
-      { x: -2, z: 0 },
-      { x: -1, z: -0.5 },
-      { x: 0, z: -1 },
-      { x: 1, z: -1.5 },
+    // Small pond on the island
+    const pond = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.8, 0.8, 0.05, 16),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x4FC3F7,
+        roughness: 0.1,
+        metalness: 0.3,
+        transparent: true,
+        opacity: 0.8,
+        emissive: 0x4FC3F7,
+        emissiveIntensity: 0.2
+      })
+    );
+    pond.position.set(-3, 0.28, 0);
+    scene.add(pond);
+    
+    // Pond rim
+    const pondRim = new THREE.Mesh(
+      new THREE.TorusGeometry(0.85, 0.08, 8, 16),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x8D6E63,
+        roughness: 0.9
+      })
+    );
+    pondRim.position.set(-3, 0.3, 0);
+    pondRim.rotation.x = -Math.PI / 2;
+    scene.add(pondRim);
+
+    // Waterfall from island edge
+    const waterfallGroup = new THREE.Group();
+    const waterfall = new THREE.Mesh(
+      new THREE.BoxGeometry(0.3, 3, 0.1),
+      new THREE.MeshStandardMaterial({ 
+        color: 0x81D4FA,
+        roughness: 0.1,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.7,
+        emissive: 0x81D4FA,
+        emissiveIntensity: 0.3
+      })
+    );
+    waterfall.position.set(0, -1.5, 0);
+    waterfallGroup.add(waterfall);
+    
+    // Waterfall splash at bottom
+    const splash = new THREE.Mesh(
+      new THREE.SphereGeometry(0.3, 8, 8),
+      new THREE.MeshStandardMaterial({ 
+        color: 0xB3E5FC,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.5,
+        emissive: 0xB3E5FC,
+        emissiveIntensity: 0.2
+      })
+    );
+    splash.position.set(0, -3, 0);
+    splash.scale.y = 0.3;
+    waterfallGroup.add(splash);
+    
+    waterfallGroup.position.set(4.5, 0.2, -2);
+    waterfallGroup.rotation.z = 0.15;
+    scene.add(waterfallGroup);
+
+    // Small bushes
+    const bushPositions = [
+      { x: 3, z: -3.5 },
+      { x: -4, z: 2 },
+      { x: 0, z: 4 },
     ];
     
-    pathStones.forEach(pos => {
-      const stone = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.25, 0.3, 0.08, 8),
+    bushPositions.forEach(pos => {
+      const bush = new THREE.Mesh(
+        new THREE.SphereGeometry(0.4, 8, 8),
         new THREE.MeshStandardMaterial({ 
-          color: 0xD2B48C,
-          roughness: 0.8
+          color: 0x388E3C,
+          roughness: 0.8,
+          flatShading: true
         })
       );
-      stone.position.set(pos.x, 0.24, pos.z);
-      stone.receiveShadow = true;
-      scene.add(stone);
+      bush.position.set(pos.x, 0.5, pos.z);
+      bush.scale.y = 0.7;
+      bush.castShadow = true;
+      scene.add(bush);
+    });
+
+    // Small decorative trees on the island
+    const smallTreePositions = [
+      { x: -3.5, z: -2.5 },
+      { x: 3.5, z: 2.5 },
+      { x: -2, z: 3.5 },
+    ];
+    
+    smallTreePositions.forEach(pos => {
+      const smallTreeGroup = new THREE.Group();
+      
+      // Trunk
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.12, 0.8),
+        new THREE.MeshStandardMaterial({ 
+          color: 0x6D4C41,
+          roughness: 0.9
+        })
+      );
+      trunk.position.y = 0.4;
+      trunk.castShadow = true;
+      smallTreeGroup.add(trunk);
+      
+      // Canopy layers
+      const canopy1 = new THREE.Mesh(
+        new THREE.ConeGeometry(0.5, 0.8, 8),
+        new THREE.MeshStandardMaterial({ 
+          color: 0x2E7D32,
+          roughness: 0.8,
+          flatShading: true
+        })
+      );
+      canopy1.position.y = 1.0;
+      canopy1.castShadow = true;
+      smallTreeGroup.add(canopy1);
+      
+      const canopy2 = new THREE.Mesh(
+        new THREE.ConeGeometry(0.4, 0.6, 8),
+        new THREE.MeshStandardMaterial({ 
+          color: 0x388E3C,
+          roughness: 0.8,
+          flatShading: true
+        })
+      );
+      canopy2.position.y = 1.4;
+      canopy2.castShadow = true;
+      smallTreeGroup.add(canopy2);
+      
+      smallTreeGroup.position.set(pos.x, 0.3, pos.z);
+      scene.add(smallTreeGroup);
     });
   }, []);
 
@@ -210,7 +349,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
       metalness: 0.05
     });
     const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-    wall.position.set(0, wallHeight / 2 + 0.2, -2.5);
+    wall.position.set(0, wallHeight / 2 + 0.3, -2);
     wall.castShadow = true;
     wall.receiveShadow = true;
     wallGroup.add(wall);
@@ -225,7 +364,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
       emissiveIntensity: 0.1
     });
     const top = new THREE.Mesh(topGeometry, topMaterial);
-    top.position.set(0, wallHeight + 0.38, -2.5);
+    top.position.set(0, wallHeight + 0.48, -2);
     top.castShadow = true;
     wallGroup.add(top);
 
@@ -243,8 +382,8 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
         const offsetX = row % 2 === 0 ? 0 : 0.35;
         brick.position.set(
           col * 0.75 - wallWidth / 2 + 0.4 + offsetX,
-          row * 0.5 + 0.45,
-          -2.05
+          row * 0.5 + 0.55,
+          -1.55
         );
         wallGroup.add(brick);
       }
@@ -265,8 +404,8 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
       );
       gem.position.set(
         (i - 1.5) * 1.5,
-        wallHeight + 0.6,
-        -2.5
+        wallHeight + 0.7,
+        -2
       );
       gem.rotation.y = Math.PI / 4;
       wallGroup.add(gem);
@@ -277,7 +416,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
 
   const createTree = useCallback((scene: THREE.Scene) => {
     const treeGroup = new THREE.Group();
-    treeGroup.position.set(1.5, 0.2, -1.5);
+    treeGroup.position.set(1.5, 0.3, -1.5);
     scene.add(treeGroup);
     treeGroupRef.current = treeGroup;
     return treeGroup;
@@ -743,7 +882,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
     pomPom.position.y = 1.72;
     charGroup.add(pomPom);
     
-    charGroup.position.set(-3, 0.2, 1);
+    charGroup.position.set(-2, 0.3, 2);
     scene.add(charGroup);
     characterRef.current = charGroup;
     return charGroup;
@@ -751,7 +890,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
 
   const createStairs = useCallback((scene: THREE.Scene) => {
     const stairsGroup = new THREE.Group();
-    stairsGroup.position.set(1.5, 0.2, -1.5);
+    stairsGroup.position.set(1.5, 0.3, -1.5);
     
     // Wooden stairs
     const woodColor = 0xDEB887;
@@ -801,7 +940,7 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
 
   const createWaterDrops = useCallback((scene: THREE.Scene) => {
     const waterGroup = new THREE.Group();
-    waterGroup.position.set(1.5, 1.5, -1.5);
+    waterGroup.position.set(1.5, 1.8, -1.5);
     waterGroup.visible = false;
     
     for (let i = 0; i < 10; i++) {
@@ -835,14 +974,14 @@ export default function ThreeScene({ timeValue, treeStage, hasWater, showStairs,
     // Scene setup
     const scene = new THREE.Scene();
     
-    // Gradient sky using a large sphere
+    // Gradient sky using a large sphere - soft pastel blue like reference
     const skyGeo = new THREE.SphereGeometry(40, 32, 32);
     const skyMat = new THREE.ShaderMaterial({
       uniforms: {
-        topColor: { value: new THREE.Color(0x4FC3F7) },
-        bottomColor: { value: new THREE.Color(0xFFF9C4) },
+        topColor: { value: new THREE.Color(0x87CEEB) },
+        bottomColor: { value: new THREE.Color(0xB3E5FC) },
         offset: { value: 10 },
-        exponent: { value: 0.5 }
+        exponent: { value: 0.4 }
       },
       vertexShader: `
         varying vec3 vWorldPosition;
