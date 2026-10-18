@@ -1,1 +1,93 @@
 @import "tailwindcss";
+
+/* ============================================================================
+   CHRONO GARDEN 8-BIT — retro CSS : pixel font, NES panels, CRT overlay
+   ==========================================================================*/
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #1bc46e;
+}
+
+.font-pixel {
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+canvas {
+  image-rendering: pixelated;
+}
+
+/* ---- NES-style raised panel -------------------------------------------- */
+.nes-panel {
+  background: #23233a;
+  border: 3px solid #000;
+  box-shadow:
+    inset 0 0 0 2px #555577,
+    4px 4px 0 0 rgba(0, 0, 0, 0.55);
+  padding: 6px 8px;
+}
+
+.nes-chip {
+  background: #1b1b2e;
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px #44446a;
+  color: #ffd94a;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 4px 6px;
+  letter-spacing: 1px;
+}
+.nes-chip.dim {
+  color: #55557a;
+  box-shadow: inset 0 0 0 2px #2c2c46;
+}
+.nes-chip.sparkle {
+  color: #a8ef7c;
+  animation: chip-blink 0.7s steps(2) infinite;
+}
+@keyframes chip-blink {
+  50% { color: #fff3ae; }
+}
+
+/* ---- RPG message box ----------------------------------------------------- */
+.nes-msgbox {
+  background: #10101f;
+  border: 4px solid #000;
+  box-shadow:
+    inset 0 0 0 3px #4fa8f0,
+    inset 0 0 0 6px #000,
+    inset 0 0 0 8px #cdefff,
+    5px 5px 0 rgba(0, 0, 0, 0.6);
+  padding: 14px 16px;
+  min-height: 46px;
+}
+
+/* ---- glows ---------------------------------------------------------------- */
+.glow-cyan { text-shadow: 2px 2px 0 #0e2a63, 0 0 8px #4fa8f0; }
+.glow-gold { text-shadow: 2px 2px 0 #a86408, 0 0 10px #ffd94a; }
+
+/* ---- CRT scanlines + vignette --------------------------------------------- */
+.crt {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.14) 0px,
+      rgba(0, 0, 0, 0.14) 1px,
+      transparent 2px,
+      transparent 4px
+    ),
+    radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      rgba(10, 5, 30, 0.35) 100%
+    );
+  mix-blend-mode: multiply;
+}
