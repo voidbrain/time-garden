@@ -38,7 +38,8 @@ import { LogPanelComponent } from './log-panel.component';
       <app-input-layer />
     </main>
   ],
-  styles: [`
+  styles: [
+    `
     :host {
       display: block;
     }
@@ -99,6 +100,7 @@ import { LogPanelComponent } from './log-panel.component';
         filter: invert(1);
       }
     }
+    `,
   ],
 })
 export class GameScreenComponent {}

@@ -14,7 +14,8 @@ import { GameStore } from '../state/game.store';
       <button type="button" data-testid="reset-btn" (click)="store.reset()">⟲ R RESET</button>
     </div>
   ],
-  styles: [`
+  styles: [
+    `
     :host {
       display: block;
     }
@@ -44,6 +45,7 @@ import { GameStore } from '../state/game.store';
       transform: translate(2px, 2px);
       box-shadow: none;
     }
+    `,
   ],
 })
 export class ControlsComponent {
