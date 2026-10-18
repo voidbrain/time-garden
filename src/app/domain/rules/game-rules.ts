@@ -1,7 +1,25 @@
 import { vecEquals, formatTime, manhattan, type Vec } from '../board/coordinates';
-import { DIR_DELTA, GOAL_POS, PLANT_POS, SEEDBAG_POS, SPINGER_POS, START_POS, WALL_ROW, WALL_X, isWalkable, type Dir } from '../board/board';
+import {
+  DIR_DELTA,
+  GOAL_POS,
+  PLANT_POS,
+  SEEDBAG_POS,
+  SPINGER_POS,
+  START_POS,
+  WALL_ROW,
+  WALL_X,
+  isWalkable,
+  type Dir,
+} from '../board/board';
 import type { GameState, LogEntry } from '../game-state';
-import { MATURE_AGE, PLANT_DEADLINE, WATER_INTERVAL, EMPTY_TREE, isAlive, type TreeModel } from '../tree/tree.model';
+import {
+  MATURE_AGE,
+  PLANT_DEADLINE,
+  WATER_INTERVAL,
+  EMPTY_TREE,
+  isAlive,
+  type TreeModel,
+} from '../tree/tree.model';
 
 /** Pure result of a rules transition: state + events for the presentation layer. */
 export interface RulesResult {
@@ -41,7 +59,10 @@ export function applyMove(state: GameState, dir: Dir): RulesResult {
   const crossesWall = next.y === WALL_ROW && next.x === WALL_X && state.pos.x !== WALL_X;
   if (crossesWall && !state.stairsReady) {
     return {
-      state: withLog(state, `🧱 A mossy WALL blocks the way! Grow the tree, come back to ${formatTime(0)}.`),
+      state: withLog(
+        state,
+        `🧱 A mossy WALL blocks the way! Grow the tree, come back to ${formatTime(0)}.`,
+      ),
       events: [{ type: 'blocked-wall' }],
     };
   }
@@ -87,7 +108,10 @@ function describeTile(s: GameState): string {
 // ---------------------------------------------------------------------------
 export function applyInteract(state: GameState): RulesResult {
   if (!vecEquals(state.pos, PLANT_POS)) {
-    return { state: withLog(state, 'Stand on the SOIL PATCH (brown tiles) to plant or water.'), events: [] };
+    return {
+      state: withLog(state, 'Stand on the SOIL PATCH (brown tiles) to plant or water.'),
+      events: [],
+    };
   }
   if (state.tree.plantedAt !== null) return applyWater(state);
   return applyPlant(state);
@@ -122,18 +146,30 @@ function applyPlant(state: GameState): RulesResult {
 function applyWater(state: GameState): RulesResult {
   const tree = state.tree;
   if (tree.status === 'dead') {
-    return { state: withLog(state, '🪦 The tree is gone. Press R to rewind the whole cycle.'), events: [{ type: 'water', ok: false }] };
+    return {
+      state: withLog(state, '🪦 The tree is gone. Press R to rewind the whole cycle.'),
+      events: [{ type: 'water', ok: false }],
+    };
   }
   if (!state.hasWaterCan) {
-    return { state: withLog(state, '🚱 No water! Visit the WATER SPINGER (west crossroad spur).'), events: [{ type: 'water', ok: false }] };
+    return {
+      state: withLog(state, '🚱 No water! Visit the WATER SPINGER (west crossroad spur).'),
+      events: [{ type: 'water', ok: false }],
+    };
   }
   if (state.time > 0) {
     const s = { ...state, tree: Object.freeze({ ...tree, status: 'dead' as const }) };
-    return { state: withLog(s, '❄️ The stream is frozen past T-0... you waited too long!'), events: [{ type: 'water', ok: false }, { type: 'tree-died' }] };
+    return {
+      state: withLog(s, '❄️ The stream is frozen past T-0... you waited too long!'),
+      events: [{ type: 'water', ok: false }, { type: 'tree-died' }],
+    };
   }
   if (tree.status === 'stunted') {
     const s = { ...state, tree: Object.freeze({ ...tree, lastWateredAt: state.time }) };
-    return { state: withLog(s, '💧 Watering the stunted shrub... it sadly stays tiny.'), events: [{ type: 'water', ok: true }] };
+    return {
+      state: withLog(s, '💧 Watering the stunted shrub... it sadly stays tiny.'),
+      events: [{ type: 'water', ok: true }],
+    };
   }
 
   const age = state.time - (tree.plantedAt ?? 0);
@@ -153,12 +189,19 @@ function applyWater(state: GameState): RulesResult {
 // ---------------------------------------------------------------------------
 // TIME TRAVEL — arrows up/down or clock clicks (±10 years)
 // ---------------------------------------------------------------------------
-export function applyTimeTravel(state: GameState, deltaYears: number, playerOnPatch: boolean): RulesResult {
+export function applyTimeTravel(
+  state: GameState,
+  deltaYears: number,
+  playerOnPatch: boolean,
+): RulesResult {
   const clampedTime = Math.max(-100, Math.min(50, state.time + deltaYears));
   const clamped = clampedTime === state.time;
   if (clamped) {
     const msg = deltaYears > 0 ? '⏩ End of time (T+50y).' : '⏪ Start of time (T-100y).';
-    return { state: withLog(state, msg), events: [{ type: 'time-travel', delta: deltaYears, clamped: true }] };
+    return {
+      state: withLog(state, msg),
+      events: [{ type: 'time-travel', delta: deltaYears, clamped: true }],
+    };
   }
 
   const prev = state.time;
@@ -173,7 +216,10 @@ export function applyTimeTravel(state: GameState, deltaYears: number, playerOnPa
     const crossedDeadline = Math.max(clampedTime, prev) > lastW + WATER_INTERVAL;
     if (!playerOnPatch && away > 1 && crossedDeadline) {
       s = { ...s, tree: Object.freeze({ ...tree, status: 'dead' }) };
-      s = withLog(s, `☠️ You left it unwatered for more than ${WATER_INTERVAL} YEARS — the tree died!`);
+      s = withLog(
+        s,
+        `☠️ You left it unwatered for more than ${WATER_INTERVAL} YEARS — the tree died!`,
+      );
       events.push({ type: 'tree-died' });
       return { state: s, events };
     }
@@ -190,7 +236,8 @@ export function applyTimeTravel(state: GameState, deltaYears: number, playerOnPa
       return { state: s, events };
     }
     const age = clampedTime - tree.plantedAt;
-    const status = age >= MATURE_AGE && clampedTime <= 0 ? 'grown' : age > 0 ? 'growing' : tree.status;
+    const status =
+      age >= MATURE_AGE && clampedTime <= 0 ? 'grown' : age > 0 ? 'growing' : tree.status;
     s = { ...s, tree: Object.freeze({ ...tree, status: status as TreeModel['status'] }) };
   }
 

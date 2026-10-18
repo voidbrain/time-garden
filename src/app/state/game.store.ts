@@ -1,6 +1,12 @@
 import { computed, signal } from '@angular/core';
 import { initialGameState, TIME_STEP, type GameState } from '../domain/game-state';
-import { applyInteract, applyMove, applyReset, applyTimeTravel, type GameEvent } from '../domain/rules/game-rules';
+import {
+  applyInteract,
+  applyMove,
+  applyReset,
+  applyTimeTravel,
+  type GameEvent,
+} from '../domain/rules/game-rules';
 import type { Dir } from '../domain/board/board';
 
 /**
@@ -57,7 +63,9 @@ export class GameStore {
     this.dispatch(() => applyReset());
   }
 
-  private dispatch(reduce: (s: GameState) => { state: GameState; events: ReadonlyArray<GameEvent> }): void {
+  private dispatch(
+    reduce: (s: GameState) => { state: GameState; events: ReadonlyArray<GameEvent> },
+  ): void {
     const result = reduce(this._state());
     this._state.set(result.state);
     this._events.set(result.events);
