@@ -1,5 +1,5 @@
-import type { Vec } from '../board/coordinates';
-import { EMPTY_TREE, type TreeModel } from '../tree/tree.model';
+import type { Vec } from './board/coordinates';
+import { EMPTY_TREE, type TreeModel } from './tree/tree.model';
 
 /** One entry of the in-game chronicle. */
 export interface LogEntry {

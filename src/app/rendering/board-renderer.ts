@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import {
   BOARD_SIZE,
   buildBoard,
@@ -10,7 +10,6 @@ import {
 import { formatTime } from '../domain/board/coordinates';
 import type { GameState } from '../domain/game-state';
 import { MATURE_AGE, treeAge, treeScaleAt } from '../domain/tree/tree.model';
-import { GameStore } from '../state/game.store';
 import {
   CLOCK,
   DEADTREE,
@@ -54,6 +53,7 @@ interface Particle {
  * Pure-ish canvas renderer. It reads the store snapshot through a computed
  * and paints on requestAnimationFrame — no Angular zone involved (zoneless).
  */
+@Injectable()
 export class BoardRenderer {
   private ctx: CanvasRenderingContext2D | null = null;
   private raf = 0;
@@ -69,7 +69,7 @@ export class BoardRenderer {
     canvas.width = CANVAS_PX;
     canvas.height = CANVAS_PX;
     this.ctx = canvas.getContext('2d');
-    this.ctx.imageSmoothingEnabled = false;
+    if (this.ctx) this.ctx.imageSmoothingEnabled = false;
   }
 
   start(getState: () => GameState): void {

@@ -1,4 +1,4 @@
-import { computed, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { initialGameState, TIME_STEP, type GameState } from '../domain/game-state';
 import {
   applyInteract,
@@ -17,6 +17,7 @@ import type { Dir } from '../domain/board/board';
  * reducer and expose the new immutable snapshot plus emitted events.
  * Zoneless change detection is driven by these readonly signals.
  */
+@Injectable({ providedIn: 'root' })
 export class GameStore {
   private readonly _state = signal<GameState>(initialGameState());
   private readonly _events = signal<ReadonlyArray<GameEvent>>([]);
