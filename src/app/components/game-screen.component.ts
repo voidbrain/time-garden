@@ -37,9 +37,8 @@ import { LogPanelComponent } from './log-panel.component';
 
       <app-input-layer />
     </main>
-  ],
-  styles: [
-    `
+  `,
+  styles: `
     :host {
       display: block;
     }
@@ -59,7 +58,9 @@ import { LogPanelComponent } from './log-panel.component';
       margin: 0;
       font-size: clamp(18px, 4vw, 30px);
       color: #ffd94a;
-      text-shadow: 3px 3px 0 #a82830, 6px 6px 0 #14141e;
+      text-shadow:
+        3px 3px 0 #a82830,
+        6px 6px 0 #14141e;
       letter-spacing: 2px;
     }
     .sub {
@@ -85,22 +86,6 @@ import { LogPanelComponent } from './log-panel.component';
         transform: translateY(100%);
       }
     }
-    .victory {
-      font-family: 'Courier New', monospace;
-      font-weight: bold;
-      text-align: center;
-      color: #14141e;
-      background: repeating-linear-gradient(45deg, #ffd94a 0 12px, #fff3ae 12px 24px);
-      border: 4px solid #a86408;
-      padding: 8px;
-      animation: blink 0.8s steps(2) infinite;
-    }
-    @keyframes blink {
-      50% {
-        filter: invert(1);
-      }
-    }
-    `,
-  ],
+  `,
 })
 export class GameScreenComponent {}

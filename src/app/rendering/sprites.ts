@@ -581,11 +581,6 @@ export const ARROW: SpriteDef = {
 
 // Paint a full sprite scaled so its grid fills `wUnits` x `hUnits` world
 // units inside the ground canvas located at (px, py) canvas pixels.
-// painting helpers
-// ---------------------------------------------------------------------------
-
-// Paint a full sprite scaled so its grid fills `wUnits` x `hUnits` world
-// units inside the ground canvas located at (px, py) canvas pixels.
 export function paintScaled(
   ctx: CanvasRenderingContext2D,
   def: SpriteDef,
