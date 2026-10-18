@@ -1,11 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { GameScreenComponent } from './components/game-screen.component';
 
+/** Root shell: renders the game screen and nothing else. */
 @Component({
-  imports: [],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  imports: [GameScreenComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: '<app-game-screen />',
 })
-export class App {
-  protected readonly title = signal('chrono-garden');
-}
+export class App {}

@@ -1,5 +1,12 @@
-import { computed, effect, inject, signal } from '@angular/core';
-import { BOARD_SIZE, buildBoard, PLANT_POS, SPINGER_POS, WALL_ROW, WALL_X } from '../domain/board/board';
+import { signal } from '@angular/core';
+import {
+  BOARD_SIZE,
+  buildBoard,
+  PLANT_POS,
+  SPINGER_POS,
+  WALL_ROW,
+  WALL_X,
+} from '../domain/board/board';
 import { formatTime } from '../domain/board/coordinates';
 import type { GameState } from '../domain/game-state';
 import { MATURE_AGE, treeAge, treeScaleAt } from '../domain/tree/tree.model';
@@ -142,7 +149,7 @@ export class BoardRenderer {
     if (t <= -50) {
       ctx.fillStyle = '#fff3ae';
       for (let i = 0; i < 24; i++) {
-        const sx = ((i * 97) % CANVAS_PX);
+        const sx = (i * 97) % CANVAS_PX;
         const sy = ((i * 53) % 90) + 6;
         if ((this.frame >> 4) % 3 !== i % 3) ctx.fillRect(sx, sy, 2, 2);
       }
@@ -166,6 +173,9 @@ export class BoardRenderer {
       p.life--;
       paintScaled(ctx, p.def, p.x - 3, p.y - 3, 0.24, 0.24);
     }
+
+    // ---- clickable pixel clock, top-right ---------------------------------
+    this.paintClockOverlay(ctx, state.time);
   }
 
   private paintTile(ctx: CanvasRenderingContext2D, gx: number, gy: number, state: GameState): void {
@@ -238,7 +248,14 @@ export class BoardRenderer {
     if (gx === state.pos.x && gy === state.pos.y) {
       const walking = this.heroAnim.t < 1;
       const def = walking && (this.frame >> 2) % 2 === 0 ? HERO_WALK : HERO_IDLE;
-      paintScaled(ctx, def, c.sx - TILE * 0.42, c.sy - TILE * 1.15 + (walking ? -2 : bob * 0.4), 0.85, 0.85);
+      paintScaled(
+        ctx,
+        def,
+        c.sx - TILE * 0.42,
+        c.sy - TILE * 1.15 + (walking ? -2 : bob * 0.4),
+        0.85,
+        0.85,
+      );
     }
   }
 
@@ -277,16 +294,28 @@ export class BoardRenderer {
     this.heroAnim = { from, to, t: 0 };
   }
 
+  /** Rectangle (in canvas pixels) of the clock painted at the top-right. */
   clockRect(): { x: number; y: number; w: number; h: number } {
-    return { x: CANVAS_PX - 46, y: 6, w: 40, h: 40 };
+    return { x: CANVAS_PX - 58, y: 6, w: 50, h: 50 };
   }
 
+  /** Hit-test a canvas-pixel point against the clock sprite. */
+  isClockHit(px: number, py: number): boolean {
+    const r = this.clockRect();
+    return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h + 12;
+  }
+
+  /** Paints the clickable pixel-clock (top-right corner). */
   paintClockOverlay(ctx: CanvasRenderingContext2D, time: number): void {
     const r = this.clockRect();
     paintScaled(ctx, CLOCK, r.x, r.y, r.w / TILE, r.h / TILE);
-    ctx.fillStyle = '#000';
-    ctx.font = '8px monospace';
-    ctx.fillText(formatTime(time), r.x, r.y + r.h + 9);
+    ctx.fillStyle = '#000a';
+    ctx.fillRect(r.x - 1, r.y + r.h + 2, r.w + 2, 11);
+    ctx.fillStyle = '#ffe9a0';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(formatTime(time), r.x + r.w / 2, r.y + r.h + 10);
+    ctx.textAlign = 'left';
   }
 }
 

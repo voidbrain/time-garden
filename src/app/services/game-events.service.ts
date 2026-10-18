@@ -20,6 +20,10 @@ export class GameEventsService {
   );
 
   ofType<K extends GameEvent['type']>(type: K) {
-    return this.events$.pipe(filter((evts): evts is Extract<GameEvent, { type: K }>[] => evts.some((e) => e.type === type)));
+    return this.events$.pipe(
+      filter((evts): evts is Extract<GameEvent, { type: K }>[] =>
+        evts.some((e) => e.type === type),
+      ),
+    );
   }
 }
