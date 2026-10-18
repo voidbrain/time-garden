@@ -21,7 +21,8 @@ import { BoardRenderer } from '../rendering/board-renderer';
       <div class="scanlines" aria-hidden="true"></div>
     </div>
   ],
-  styles: [`
+  styles: [
+    `
     :host {
       display: block;
     }
@@ -45,6 +46,7 @@ import { BoardRenderer } from '../rendering/board-renderer';
       pointer-events: none;
       background: repeating-linear-gradient(rgba(0, 0, 0, 0.14) 0 2px, transparent 2px 4px);
     }
+    `,
   ],
 })
 export class BoardComponent implements OnDestroy {

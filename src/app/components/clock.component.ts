@@ -29,7 +29,8 @@ import { GameStore } from '../state/game.store';
       </div>
     </div>
   ],
-  styles: [`
+  styles: [
+    `
     :host {
       display: block;
     }
@@ -119,6 +120,7 @@ import { GameStore } from '../state/game.store';
     .btns button:active {
       transform: translate(1px, 1px);
     }
+    `,
   ],
 })
 export class ClockComponent {

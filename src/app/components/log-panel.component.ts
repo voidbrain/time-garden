@@ -19,7 +19,8 @@ import { GameStore } from '../state/game.store';
       </ul>
     </div>
   ],
-  styles: [`
+  styles: [
+    `
     :host {
       display: block;
     }
@@ -51,6 +52,7 @@ import { GameStore } from '../state/game.store';
       color: #7b3fa0;
       font-weight: bold;
     }
+    `,
   ],
 })
 export class LogPanelComponent {

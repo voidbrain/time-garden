@@ -24,7 +24,8 @@ import { GameStore } from '../state/game.store';
       }
     </div>
   ],
-  styles: [`
+  styles: [
+    `
     :host {
       display: block;
     }
@@ -75,6 +76,7 @@ import { GameStore } from '../state/game.store';
         opacity: 0.55;
       }
     }
+    `,
   ],
 })
 export class HudComponent {
