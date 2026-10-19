@@ -2,15 +2,21 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy } fro
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Subject, takeUntil } from 'rxjs';
 import type { Dir } from '../domain/board/board';
+import { BoardRenderer } from '../rendering/board-renderer';
 import { GameStore } from '../state/game.store';
 import { SoundService } from '../services/sound.service';
 
-/** Key → screen-direction map for the isometric view (WASD moves along axes). */
-const MOVE_KEYS: Record<string, Dir> = {
-  KeyW: 'N',
-  KeyS: 'S',
-  KeyA: 'W',
-  KeyD: 'E',
+/**
+ * Key → grid direction map. WASD always walks along the SCREEN diagonals of
+ * the isometric view; when the stage is rotated the mapping is re-derived so
+ * "W" keeps pointing up-right on screen no matter which way the island faces.
+ */
+const ROT_GRID_DIRS: Record<'N' | 'S' | 'E' | 'W', ('N' | 'S' | 'E' | 'W')[]> = {
+  // grid dir that currently points screen-N / S / E / W for rotations 0..3
+  N: ['N', 'E', 'S', 'W'],
+  E: ['E', 'S', 'W', 'N'],
+  S: ['S', 'W', 'N', 'E'],
+  W: ['W', 'N', 'E', 'S'],
 };
 
 /**
@@ -26,8 +32,26 @@ const MOVE_KEYS: Record<string, Dir> = {
 export class InputLayerComponent implements OnDestroy {
   private readonly store = inject(GameStore);
   private readonly sound = inject(SoundService);
+  private readonly renderer = inject(BoardRenderer);
   private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
+
+  /** WASD key -> screen axis, resolved through the current stage rotation. */
+  private screenDir(code: string): Dir | undefined {
+    const rot = this.renderer.rotation();
+    switch (code) {
+      case 'KeyW':
+        return ROT_GRID_DIRS.N[rot];
+      case 'KeyS':
+        return ROT_GRID_DIRS.S[rot];
+      case 'KeyA':
+        return ROT_GRID_DIRS.W[rot];
+      case 'KeyD':
+        return ROT_GRID_DIRS.E[rot];
+      default:
+        return undefined;
+    }
+  }
 
   constructor() {
     // Keyboard lives on window so focus never blocks gameplay.
@@ -68,10 +92,10 @@ export class InputLayerComponent implements OnDestroy {
       });
   }
 
-  /** WASD move · ↑↓ time travel ±10y · Space/E plant & water · R reset. */
+  /** WASD walk (rotation-aware) · ↑↓ time ±10y · SPACE plant/water · E/Q rotate · R reset. */
   private handleKey(event: KeyboardEvent): void {
     if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
-    const dir = MOVE_KEYS[event.code];
+    const dir = this.screenDir(event.code);
     if (dir) {
       event.preventDefault();
       this.store.move(dir);
@@ -88,9 +112,18 @@ export class InputLayerComponent implements OnDestroy {
         this.store.forward(); // down the arrow = forward in time
         break;
       case 'Space':
-      case 'KeyE':
         event.preventDefault();
         this.store.interact();
+        break;
+      case 'KeyQ':
+        event.preventDefault();
+        this.renderer.rotate(-1);
+        this.sound.play('blip');
+        break;
+      case 'KeyE':
+        event.preventDefault();
+        this.renderer.rotate(1);
+        this.sound.play('blip');
         break;
       case 'KeyR':
         this.store.reset();
