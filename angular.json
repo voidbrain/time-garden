@@ -65,7 +65,16 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json"
+          },
+          "configurations": {
+            "domain": {
+              "runner": "node",
+              "include": ["src/app/domain/**/*.spec.ts"]
+            }
+          }
         }
       }
     }
