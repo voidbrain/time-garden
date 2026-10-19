@@ -1,6 +1,28 @@
-/* Global NES-flavored stage: dark background, chunky pixels everywhere. */
+/* Chrono Garden — cohesive pixel-art visual system.
+   Keep artwork pixel-crisp; let the garden palette, not generic NES chrome,
+   establish the game's identity. Component styles should consume these tokens. */
 :root {
   color-scheme: dark;
+  --cg-night: #101d24;
+  --cg-night-soft: #172a30;
+  --cg-panel: #172a2d;
+  --cg-panel-raised: #1b3032;
+  --cg-line: #465d54;
+  --cg-line-soft: #314943;
+  --cg-ink: #e8f0dc;
+  --cg-muted: #96b3a0;
+  --cg-moss: #9ce5a5;
+  --cg-moss-dark: #315b45;
+  --cg-leaf: #669b62;
+  --cg-leaf-light: #a4d979;
+  --cg-water: #398d91;
+  --cg-water-light: #80d2b7;
+  --cg-soil: #926c48;
+  --cg-sun: #f4d37a;
+  --cg-pixel-outline: #244b3b;
+  --cg-shadow: #0a151a;
+  color: var(--cg-ink);
+  background: var(--cg-night);
 }
 
 * {
@@ -14,13 +36,33 @@ body {
 }
 
 body {
+  color: var(--cg-ink);
   background:
-    radial-gradient(circle at 20% 10%, #1c2a4a 0%, transparent 45%),
-    radial-gradient(circle at 80% 90%, #241a3e 0%, transparent 50%), #0b0d16;
-  font-family: 'Courier New', Courier, monospace;
+    radial-gradient(ellipse at 50% 18%, #263e3d 0%, transparent 48%),
+    linear-gradient(180deg, var(--cg-night-soft), var(--cg-night) 72%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 12px;
   image-rendering: pixelated;
   user-select: none;
   -webkit-user-select: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--cg-sun);
+  outline-offset: 3px;
 }
 
 canvas,
@@ -28,6 +70,34 @@ img {
   image-rendering: pixelated;
 }
 
+/* Avoid rounded, blurry UI treatment around the crisp canvas artwork. */
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* A shared focus/interaction language for buttons and clickable world tiles. */
 button {
-  font-family: inherit;
+  transition: background-color 120ms ease, border-color 120ms ease,
+    transform 120ms ease;
+}
+
+button:active {
+  transform: translate(1px, 1px);
+}
+
+::selection {
+  color: var(--cg-night);
+  background: var(--cg-moss);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
