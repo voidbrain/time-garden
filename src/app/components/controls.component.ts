@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { BoardRenderer } from '../rendering/board-renderer';
 import { GameStore } from '../state/game.store';
 
-/** Static control legend + reset button (the only intent dispatched here). */
+/** Static control legend + rotate / reset buttons (intents only, no rules). */
 @Component({
   selector: 'app-controls',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -9,8 +10,10 @@ import { GameStore } from '../state/game.store';
       <div class="controls" data-testid="controls">
       <span><b>WASD</b> walk</span>
       <span><b>↑↓</b> ±10 years</span>
-      <span><b>SPACE/E</b> plant & water</span>
-      <span><b>CLICK CLOCK</b> +10y</span>
+      <span><b>SPACE</b> plant & water</span>
+      <span><b>Q/E</b> rotate stage</span>
+      <button type="button" data-testid="rot-ccw" (click)="renderer.rotate(-1)">⟲ Q</button>
+      <button type="button" data-testid="rot-cw" (click)="renderer.rotate(1)">E ⟳</button>
       <button type="button" data-testid="reset-btn" (click)="store.reset()">⟲ R RESET</button>
       </div>
     `,
@@ -48,4 +51,5 @@ button:active {
 })
 export class ControlsComponent {
   protected readonly store = inject(GameStore);
+  protected readonly renderer = inject(BoardRenderer);
 }
