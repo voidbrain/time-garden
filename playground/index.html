@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chrono Garden — Domain Playground</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #1b2438;
+        --panel: #243a63;
+        --accent: #7fd47f;
+        --gold: #ffd97a;
+      }
+      body {
+        margin: 0;
+        font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+        background: var(--bg);
+        color: #dfe8ff;
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        max-width: 860px;
+        margin-inline: auto;
+      }
+      h1 {
+        font-size: 1.1rem;
+        letter-spacing: 0.15em;
+        color: var(--accent);
+      }
+      .hint {
+        color: #93a6c9;
+        font-size: 0.8rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 22px);
+        gap: 2px;
+        justify-content: start;
+        background: var(--panel);
+        padding: 10px;
+        border-radius: 8px;
+        width: fit-content;
+      }
+      .cell {
+        width: 22px;
+        height: 22px;
+        border-radius: 3px;
+        background: #2e5b3a;
+        font-size: 12px;
+        text-align: center;
+        line-height: 22px;
+      }
+      .path {
+        background: #6b5a3e;
+      }
+      .p {
+        background: var(--gold);
+        color: #000;
+        font-weight: bold;
+      }
+      .soil {
+        outline: 2px solid #b0793f;
+      }
+      .wall {
+        background: #55617a;
+      }
+      .goal {
+        background: #3f7fae;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      button {
+        background: var(--panel);
+        color: inherit;
+        border: 1px solid #3d5a8f;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      pre#log {
+        background: #10192b;
+        padding: 10px;
+        border-radius: 8px;
+        min-height: 120px;
+        max-height: 260px;
+        overflow: auto;
+        font-size: 0.78rem;
+        white-space: pre-wrap;
+      }
+      .status b {
+        color: var(--gold);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🌳 CHRONO GARDEN · DOMAIN PLAYGROUND</h1>
+    <p class="hint">
+      Raw rule-engine sandbox (no Angular, no canvas). Served by
+      <code>tools/serve-playground.mjs</code>, which transpiles the real
+      <code>src/app/domain/*.ts</code> modules on the fly — what you test here is
+      exactly what ships. Keyboard: WASD / arrows / Space / R also work.
+    </p>
+
+    <div id="board" class="grid" aria-label="garden board"></div>
+
+    <div class="row status" id="status"></div>
+
+    <div class="row">
+      <button data-act="W">W ↗</button>
+      <button data-act="A">W ↙</button>
+      <button data-act="S">S ↘</button>
+      <button data-act="D">E →</button>
+      <button data-act="N">N ↑</button>
+      <button data-act="E">E ↓</button>
+    </div>
+    <div class="row">
+      <button data-act="back">⏪ −10y</button>
+      <button data-act="fwd">⏩ +10y</button>
+      <button data-act="interact">🌱 plant / 💧 water</button>
+      <button data-act="reset">🔄 reset</button>
+      <button data-act="autoplay">🤖 autoplay win path</button>
+    </div>
+
+    <pre id="log"></pre>
+
+    <script type="module">
+      import {
+        applyInteract,
+        applyMove,
+        applyReset,
+        applyTimeTravel,
+        initialGameState,
+        PLANT_POS,
+        SEEDBAG_POS,
+        SPINGER_POS,
+        GOAL_POS,
+        WALL_ROW,
+        WALL_X,
+        vecEquals,
+      } from '/src/app/domain/board/index.js';
+      import { playWinPath } from './simulate.mjs';
+
+      let state = initialGameState();
+      const boardEl = document.getElementById('board');
+      const statusEl = document.getElementById('status');
+      const logEl = document.getElementById('log');
+
+      function render() {
+        boardEl.innerHTML = '';
+        for (let y = 0; y < 12; y++) {
+          for (let x = 0; x < 12; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if (x === WALL_X && y === WALL_ROW) cell.classList.add('wall');
+            if (vecEquals({ x, y }, GOAL_POS)) cell.classList.add('goal');
+            if (vecEquals({ x, y }, PLANT_POS)) cell.classList.add('soil');
+            if (vecEquals({ x, y }, state.pos)) {
+              cell.classList.add('p');
+              cell.textContent = '☺';
+            } else if (vecEquals({ x, y }, SEEDBAG_POS)) cell.textContent = '🌰';
+            else if (vecEquals({ x, y }, SPINGER_POS)) cell.textContent = '💧';
+            boardEl.appendChild(cell);
+          }
+        }
+        statusEl.innerHTML = [
+          `<span>pos <b>${state.pos.x},${state.pos.y}</b></span>`,
+          `<span>time <b>T${state.time >= 0 ? '+' : ''}${state.time}y</b></span>`,
+          `<span>tree <b>${state.tree.status}</b></span>`,
+          `<span>seeds <b>${state.hasSeeds ? '✔' : '✘'}</b></span>`,
+          `<span>can <b>${state.hasWaterCan ? '✔' : '✘'}</b></span>`,
+          `<span>stairs <b>${state.stairsReady ? '✨' : '—'}</b></span>`,
+          `<span>won <b>${state.crossedWall ? '🏆' : '—'}</b></span>`,
+        ].join(' ');
+        logEl.textContent = state.log.map((l) => `[T${l.time}] ${l.text}`).join('\n');
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function dispatch(result) {
+        state = result.state;
+        for (const ev of result.events) console.debug('event:', ev);
+        render();
+      }
+
+      const actions = {
+        W: () => dispatch(applyMove(state, 'N')), // screen-up-right in iso view
+        A: () => dispatch(applyMove(state, 'W')),
+        S: () => dispatch(applyMove(state, 'S')),
+        D: () => dispatch(applyMove(state, 'E')),
+        N: () => dispatch(applyMove(state, 'N')),
+        E: () => dispatch(applyMove(state, 'E')),
+        back: () =>
+          dispatch(applyTimeTravel(state, -10, vecEquals(state.pos, PLANT_POS))),
+        fwd: () => dispatch(applyTimeTravel(state, 10, vecEquals(state.pos, PLANT_POS))),
+        interact: () => dispatch(applyInteract(state)),
+        reset: () => dispatch(applyReset()),
+        autoplay: () => {
+          const { trace } = playWinPath();
+          state = initialGameState();
+          logEl.textContent = trace.join('\n');
+          render();
+        },
+      };
+
+      document.querySelectorAll('[data-act]').forEach((btn) =>
+        btn.addEventListener('click', () => actions[btn.dataset.act]?.()),
+      );
+
+      const KEYS = {
+        KeyW: 'W',
+        KeyA: 'A',
+        KeyS: 'S',
+        KeyD: 'D',
+        ArrowUp: 'back',
+        ArrowDown: 'fwd',
+        Space: 'interact',
+        KeyE: 'interact',
+        KeyR: 'reset',
+      };
+      window.addEventListener('keydown', (e) => {
+        const act = KEYS[e.code];
+        if (act) {
+          e.preventDefault();
+          actions[act]();
+        }
+      });
+
+      render();
+    </script>
+  </body>
+</html>
