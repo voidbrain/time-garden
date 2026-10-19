@@ -47,32 +47,22 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22' # Angular 22 requires Node.js >= v22.22.3
           cache: ${{ steps.detect-package-manager.outputs.manager }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            dist
-            .vite
-          key: ${{ runner.os }}-build-${{ hashFiles('dist') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
 
-      - name: Build with Vite
-        run: ${{ steps.detect-package-manager.outputs.runner }} vite build --base /${{ github.event.repository.name }}/
+      - name: Build with Angular CLI
+        run: npx --no-install ng build --configuration production --base-href /${{ github.event.repository.name }}/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./dist/chrono-garden/browser
 
   # Deployment job
   deploy:
